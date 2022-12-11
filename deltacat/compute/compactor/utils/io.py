@@ -1,6 +1,6 @@
 import logging
 import math
-from deltacat.constants import PYARROW_INFLATION_MULTIPLIER, BYTES_PER_MEBIBYTE
+from deltacat.constants import BYTES_PER_MEBIBYTE
 
 from ray import ray_constants
 
@@ -58,12 +58,16 @@ def limit_input_deltas(
         cluster_resources: Dict[str, float],
         hash_bucket_count: int,
         user_hash_bucket_chunk_size: int,
-        deltacat_storage=unimplemented_deltacat_storage) \
-        -> Tuple[List[DeltaAnnotated], int, int]:
+        pyarrow_inflation_multiplier: float,
+        deltacat_storage=unimplemented_deltacat_storage,
+) -> Tuple[List[DeltaAnnotated], int, int]:
 
     # TODO (pdames): when row counts are available in metadata, use them
     #  instead of bytes - memory consumption depends more on number of
     #  input delta records than bytes.
+
+    # TODO (pdames): Take into account the size of existing primary key indexes
+    #  that need to be consumed by the dedupe step.
 
     # we assume here that we're running on a fixed-size cluster
     # this assumption could be removed, but we'd still need to know the max
@@ -100,7 +104,7 @@ def limit_input_deltas(
         for entry in manifest_entries:
             # TODO: Fetch s3_obj["Size"] if entry content length undefined?
             delta_bytes += entry.meta.content_length
-            delta_bytes_pyarrow = delta_bytes * PYARROW_INFLATION_MULTIPLIER
+            delta_bytes_pyarrow = delta_bytes * pyarrow_inflation_multiplier
             latest_stream_position = max(position, latest_stream_position)
         if delta_bytes_pyarrow > worker_obj_store_mem:
             logger.info(
@@ -148,7 +152,7 @@ def limit_input_deltas(
 
     hash_bucket_chunk_size = user_hash_bucket_chunk_size
     max_hash_bucket_chunk_size = math.ceil(
-        worker_obj_store_mem_per_task / PYARROW_INFLATION_MULTIPLIER
+        worker_obj_store_mem_per_task / pyarrow_inflation_multiplier
     )
     logger.info(f"Max hash bucket chunk size: {max_hash_bucket_chunk_size}")
     if hash_bucket_chunk_size > max_hash_bucket_chunk_size:
