@@ -33,20 +33,23 @@ setuptools.setup(
     long_description_content_type="text/markdown",
     url="https://github.com/ray-project/deltacat",
     packages=setuptools.find_packages(where=".", include="deltacat*"),
+    extras_require={
+        # "iceberg": ["pyiceberg >= 0.5.0"],  # TODO: uncomment!
+        "iceberg": ["pyiceberg[glue] @ git+https://github.com/apache/iceberg-python"],
+    },
     install_requires=[
         # any changes here should also be reflected in requirements.txt
-        "boto3 ~= 1.20",
-        "getdaft == 0.1.15",
+        # "boto3 ~= 1.20",  # uncomment to find a new compatibile version of boto3 (resolver may take several minutes)
+        "boto3 == 1.24.59",
+        "getdaft == 0.2.12",
         "numpy == 1.21.5",
         "pandas == 1.3.5",
         "pyarrow == 12.0.1",
-        "pydantic >= 1.10.4",
-        "pyiceberg >= 0.4.0",
-        "ray[data] ~= 2.4",
+        "pymemcache == 4.0.0",
+        "ray ~= 2.9",
         "s3fs == 2023.1.0",
         "tenacity == 8.1.0",
-        "typing-extensions == 4.4.0",
-        "pymemcache == 4.0.0",
+        "typing-extensions == 4.6.1",
         "redis == 4.6.0",
         "schedule == 1.2.0",
     ],
@@ -58,7 +61,6 @@ setuptools.setup(
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
         "Programming Language :: Python :: 3 :: Only",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Operating System :: OS Independent",

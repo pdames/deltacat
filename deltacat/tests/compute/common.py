@@ -28,34 +28,26 @@ class PartitionKeyType(str, Enum):
     TIMESTAMP = "timestamp"
 
 
-class PartitionKey(dict):
-    @staticmethod
-    def of(key_name: str, key_type: PartitionKeyType) -> PartitionKey:
-        return PartitionKey({"keyName": key_name, "keyType": key_type.value})
-
-    @property
-    def key_name(self) -> str:
-        return self["keyName"]
-
-    @property
-    def key_type(self) -> PartitionKeyType:
-        key_type = self["keyType"]
-        return None if key_type is None else PartitionKeyType(key_type)
-
-
 def setup_sort_and_partition_keys(sort_keys_param, partition_keys_param):
-    from deltacat.storage.model.sort_key import SortKey
+    from deltacat.storage.model.sort_key import SortKey, SortScheme
+    from deltacat.storage.model.partition import PartitionScheme, PartitionKey
 
     sort_keys, partition_keys = None, None
     if sort_keys_param is not None:
-        sort_keys = [SortKey.of(sort_key["key_name"]) for sort_key in sort_keys_param]
+        sort_keys = SortScheme.of(
+            keys=[SortKey.of(sort_key["key_name"]) for sort_key in sort_keys_param],
+        )
+
     if partition_keys_param is not None:
-        partition_keys = [
-            PartitionKey.of(
-                partition_key["key_name"], PartitionKeyType(partition_key["key_type"])
-            )
-            for partition_key in partition_keys_param
-        ]
+        partition_keys = PartitionScheme.of(
+            keys=[
+                PartitionKey.of(
+                    partition_key["key_name"],
+                    PartitionKeyType(partition_key["key_type"]).value,
+                )
+                for partition_key in partition_keys_param
+            ]
+        )
     return sort_keys, partition_keys
 
 

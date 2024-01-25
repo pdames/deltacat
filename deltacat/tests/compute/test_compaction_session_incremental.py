@@ -10,7 +10,6 @@ import pyarrow as pa
 from deltacat.tests.test_utils.utils import read_s3_contents
 from deltacat.tests.compute.common import (
     setup_sort_and_partition_keys,
-    PartitionKey,
     TEST_S3_RCF_BUCKET_NAME,
     BASE_TEST_SOURCE_NAMESPACE,
     BASE_TEST_SOURCE_TABLE_NAME,
@@ -87,8 +86,8 @@ def setup_incremental_source_and_destination_tables(
     source_table_version: str,
     destination_table_version: str,
     primary_keys: Set[str],
-    sort_keys: Optional[List[Any]],
-    partition_keys: Optional[List[PartitionKey]],
+    sort_keys: Optional[Dict[str, Any]],
+    partition_keys: Optional[Dict[str, Any]],
     column_names: List[str],
     arrow_arrays: List[pa.Array],
     partition_values: Optional[List[Any]],

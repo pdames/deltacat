@@ -1,14 +1,20 @@
 from enum import Enum
 from typing import List, Union, Any
 
-from pyarrow.parquet import ParquetFile
 import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pkg_resources
-from ray.data.dataset import Dataset
 
-LocalTable = Union[pa.Table, pd.DataFrame, np.ndarray, ParquetFile]
+from ray.data.dataset import Dataset
+from daft import DataFrame
+
+LocalTable = Union[
+    pa.Table,
+    pd.DataFrame,
+    np.ndarray,
+    pa.parquet.ParquetFile,
+]
 LocalDataset = List[LocalTable]
 
 # Starting Ray 2.5.0, Dataset follows a strict mode (https://docs.ray.io/en/latest/data/faq.html#migrating-to-strict-mode),
@@ -18,9 +24,15 @@ change_version = pkg_resources.parse_version("2.5.0")
 if ray_version < change_version:
     from ray.data._internal.arrow_block import ArrowRow
 
-    DistributedDataset = Dataset[Union[ArrowRow, np.ndarray, Any]]
+    DistributedDataset = Union[Dataset[Union[ArrowRow, np.ndarray, Any]], DataFrame]
 else:
-    DistributedDataset = Dataset
+    DistributedDataset = Union[Dataset, DataFrame]
+
+
+class CatalogType(str, Enum):
+    ICEBERG = "iceberg"
+    HUDI = "hudi"
+    DELTA_LAKE = "delta_lake"
 
 
 class DeltaType(str, Enum):
@@ -45,10 +57,9 @@ class CommitState(str, Enum):
 
 class SchemaConsistencyType(str, Enum):
     """
-    Schemas are optional for DeltaCAT tables and can be used to inform the data
-    consistency checks run for each field. If a schema is present, it can be
-    used to enforce the following column-level data consistency policies at
-    table load time:
+    DeltaCAT table schemas can be used to inform the data consistency checks
+    run for each field. When present, the schema can be used to enforce the
+    following column-level data consistency policies at table load time:
 
     NONE: No consistency checks are run. May be mixed with the below two
     policies by specifying column names to pass through together with

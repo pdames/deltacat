@@ -5,14 +5,36 @@ from deltacat.aws.redshift import (
     ManifestEntryList,
     ManifestMeta,
 )
-from deltacat.storage.model.delta import Delta, DeltaLocator
+from deltacat.storage.model.delta import (
+    Delta,
+    DeltaLocator,
+    DeltaProperties,
+)
 from deltacat.storage.model.list_result import ListResult
 from deltacat.storage.model.locator import Locator
-from deltacat.storage.model.namespace import Namespace, NamespaceLocator
-from deltacat.storage.model.partition import Partition, PartitionLocator
+from deltacat.storage.model.namespace import (
+    Namespace,
+    NamespaceLocator,
+    NamespaceProperties,
+)
+from deltacat.storage.model.partition import (
+    Partition,
+    PartitionLocator,
+    PartitionKey,
+    PartitionScheme,
+)
+from deltacat.storage.model.schema import Schema
 from deltacat.storage.model.stream import Stream, StreamLocator
-from deltacat.storage.model.table import Table, TableLocator
-from deltacat.storage.model.table_version import TableVersion, TableVersionLocator
+from deltacat.storage.model.table import (
+    Table,
+    TableLocator,
+    TableProperties,
+)
+from deltacat.storage.model.table_version import (
+    TableVersion,
+    TableVersionLocator,
+    TableVersionProperties,
+)
 from deltacat.storage.model.types import (
     CommitState,
     DeltaType,
@@ -22,13 +44,18 @@ from deltacat.storage.model.types import (
     LocalTable,
     SchemaConsistencyType,
 )
-from deltacat.storage.model.sort_key import SortKey, SortOrder
+from deltacat.storage.model.sort_key import (
+    NullOrder,
+    SortKey,
+    SortOrder,
+    SortScheme,
+)
 
 __all__ = [
     "CommitState",
     "Delta",
     "DeltaLocator",
-    "Partition",
+    "DeltaProperties",
     "DeltaType",
     "DistributedDataset",
     "LifecycleState",
@@ -39,18 +66,27 @@ __all__ = [
     "Manifest",
     "ManifestAuthor",
     "ManifestEntry",
-    "ManifestMeta",
     "ManifestEntryList",
+    "ManifestMeta",
     "Namespace",
     "NamespaceLocator",
+    "NamespaceProperties",
+    "NullOrder",
+    "Partition",
+    "PartitionKey",
     "PartitionLocator",
-    "Stream",
-    "SchemaConsistencyType",
-    "StreamLocator",
+    "PartitionScheme",
     "Table",
     "TableLocator",
+    "TableProperties",
     "TableVersion",
     "TableVersionLocator",
+    "TableVersionProperties",
+    "Schema",
+    "SchemaConsistencyType",
     "SortKey",
     "SortOrder",
+    "SortScheme",
+    "Stream",
+    "StreamLocator",
 ]

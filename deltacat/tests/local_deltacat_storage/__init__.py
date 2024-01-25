@@ -6,11 +6,13 @@ import sqlite3
 from sqlite3 import Cursor, Connection
 import uuid
 import io
+
 from deltacat.utils.common import current_time_ms
 
 from deltacat.storage import (
     Delta,
     DeltaLocator,
+    DeltaProperties,
     DeltaType,
     DistributedDataset,
     LifecycleState,
@@ -21,16 +23,21 @@ from deltacat.storage import (
     ManifestAuthor,
     Namespace,
     NamespaceLocator,
+    NamespaceProperties,
     Partition,
+    PartitionScheme,
+    Schema,
     SchemaConsistencyType,
     Stream,
     StreamLocator,
     Table,
     TableVersion,
     TableVersionLocator,
+    TableVersionProperties,
     TableLocator,
+    TableProperties,
     CommitState,
-    SortKey,
+    SortScheme,
     PartitionLocator,
     ManifestMeta,
     ManifestEntry,
@@ -404,11 +411,11 @@ def get_delta_manifest(
 
 
 def create_namespace(
-    namespace: str, permissions: Dict[str, Any], *args, **kwargs
+    namespace: str, properties: NamespaceProperties, *args, **kwargs
 ) -> Namespace:
     cur, con = _get_sqlite3_cursor_con(kwargs)
     locator = NamespaceLocator.of(namespace)
-    result = Namespace.of(locator, permissions)
+    result = Namespace.of(locator, properties)
     params = (locator.canonical_string(), json.dumps(result))
     cur.execute(CREATE_NAMESPACES_TABLE)
     cur.execute(CREATE_TABLES_TABLE)
@@ -424,7 +431,7 @@ def create_namespace(
 
 def update_namespace(
     namespace: str,
-    permissions: Optional[Dict[str, Any]] = None,
+    properties: NamespaceProperties = None,
     new_namespace: Optional[str] = None,
     *args,
     **kwargs,
@@ -432,7 +439,7 @@ def update_namespace(
     assert new_namespace is None, "namespace name cannot be changed"
     cur, con = _get_sqlite3_cursor_con(kwargs)
     locator = NamespaceLocator.of(namespace)
-    result = Namespace.of(locator, permissions)
+    result = Namespace.of(locator, properties)
     params = (json.dumps(result), locator.canonical_string())
     cur.execute("UPDATE namespaces SET value = ? WHERE locator = ?", params)
     con.commit()
@@ -442,16 +449,15 @@ def create_table_version(
     namespace: str,
     table_name: str,
     table_version: Optional[str] = None,
-    schema: Optional[Union[pa.Schema, str, bytes]] = None,
+    schema: Optional[Union[pa.Schema, Any]] = None,
     schema_consistency: Optional[Dict[str, SchemaConsistencyType]] = None,
-    partition_keys: Optional[List[Dict[str, Any]]] = None,
+    partition_keys: Optional[PartitionScheme] = None,
     primary_key_column_names: Optional[Set[str]] = None,
-    sort_keys: Optional[List[SortKey]] = None,
+    sort_keys: Optional[SortScheme] = None,
     table_version_description: Optional[str] = None,
-    table_version_properties: Optional[Dict[str, str]] = None,
-    table_permissions: Optional[Dict[str, Any]] = None,
+    table_version_properties: Optional[TableVersionProperties] = None,
     table_description: Optional[str] = None,
-    table_properties: Optional[Dict[str, str]] = None,
+    table_properties: Optional[TableProperties] = None,
     supported_content_types: Optional[List[ContentType]] = None,
     *args,
     **kwargs,
@@ -473,9 +479,7 @@ def create_table_version(
         )
 
     table_locator = TableLocator.of(NamespaceLocator.of(namespace), table_name)
-    table_obj = Table.of(
-        table_locator, table_permissions, table_description, table_properties
-    )
+    table_obj = Table.of(table_locator, table_description, table_properties)
     table_version_locator = TableVersionLocator.of(
         table_locator=table_locator, table_version=table_version
     )
@@ -488,7 +492,7 @@ def create_table_version(
     properties = {**table_version_properties, STREAM_ID_PROPERTY: stream_id}
     table_version_obj = TableVersion.of(
         table_version_locator,
-        schema=schema,
+        schema=Schema.of(schema),
         partition_keys=partition_keys,
         primary_key_columns=primary_key_column_names,
         description=table_version_description,
@@ -529,16 +533,15 @@ def create_table_version(
 def update_table(
     namespace: str,
     table_name: str,
-    permissions: Optional[Dict[str, Any]] = None,
     description: Optional[str] = None,
-    properties: Optional[Dict[str, str]] = None,
+    properties: Optional[TableProperties] = None,
     new_table_name: Optional[str] = None,
     *args,
     **kwargs,
 ) -> None:
     cur, con = _get_sqlite3_cursor_con(kwargs)
     table_locator = TableLocator.of(NamespaceLocator.of(namespace), table_name)
-    table_obj = Table.of(table_locator, permissions, description, properties)
+    table_obj = Table.of(table_locator, description, properties)
 
     params = (table_locator.canonical_string(),)
     cur.execute("DELETE FROM tables WHERE locator = ?", params)
@@ -556,10 +559,10 @@ def update_table_version(
     table_name: str,
     table_version: str,
     lifecycle_state: Optional[LifecycleState] = None,
-    schema: Optional[Union[pa.Schema, str, bytes]] = None,
+    schema: Optional[Union[pa.Schema, Any]] = None,
     schema_consistency: Optional[Dict[str, SchemaConsistencyType]] = None,
     description: Optional[str] = None,
-    properties: Optional[Dict[str, str]] = None,
+    properties: Optional[TableVersionProperties] = None,
     *args,
     **kwargs,
 ) -> None:
@@ -591,7 +594,7 @@ def update_table_version(
     tv_properties = {**properties, **current_props}
     table_version_obj = TableVersion.of(
         table_version_locator,
-        schema=schema,
+        schema=Schema.of(schema),
         partition_keys=current_table_version_obj.partition_keys,
         primary_key_columns=current_table_version_obj.primary_keys,
         description=description,
@@ -658,7 +661,7 @@ def commit_stream(stream: Stream, *args, **kwargs) -> Stream:
         stream.locator,
         stream.partition_keys,
         CommitState.COMMITTED,
-        stream.previous_stream_digest,
+        stream.previous_stream_id,
     )
 
     existing_table_version.properties[
@@ -835,7 +838,7 @@ def stage_delta(
     delta_type: DeltaType = DeltaType.UPSERT,
     max_records_per_entry: Optional[int] = None,
     author: Optional[ManifestAuthor] = None,
-    properties: Optional[Dict[str, str]] = None,
+    properties: Optional[DeltaProperties] = None,
     s3_table_writer_kwargs: Optional[Dict[str, Any]] = None,
     content_type: ContentType = ContentType.PARQUET,
     *args,
@@ -1018,7 +1021,7 @@ def get_table_version_schema(
     table_version: Optional[str] = None,
     *args,
     **kwargs,
-) -> Optional[Union[pa.Schema, str, bytes]]:
+) -> Optional[Union[pa.Schema, Any]]:
     obj = get_table_version(namespace, table_name, table_version, *args, **kwargs)
 
     return obj.schema
