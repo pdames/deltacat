@@ -167,6 +167,29 @@ class ReadKwargsProviderPyArrowCsvPureUtf8(ContentTypeKwargsProvider):
         return kwargs
 
 
+class ReadKwargsProviderPyArrowSchemaOverride(ContentTypeKwargsProvider):
+    """ReadKwargsProvider impl that explicitly maps column names to column types when loading
+    delimited text files into a PyArrow table. Disables the default type inference behavior on the defined columns.
+    """
+    def __init__(self, schema: Optional[pa.Schema] = None):
+        self.schema = schema
+
+    def _get_kwargs(
+            self,
+            content_type: str,
+            kwargs: Dict[str, Any]) -> Dict[str, Any]:
+        if content_type in DELIMITED_TEXT_CONTENT_TYPES:
+            convert_options = kwargs.get("convert_options", pacsv.ConvertOptions())
+            if self.schema:
+                convert_options.column_types = self.schema
+            kwargs["convert_options"] = convert_options
+        elif content_type == ContentType.PARQUET:
+            # kwargs here are passed into `pyarrow.parquet.read_table`. Only supported in PyArrow 8.0.0+
+            if self.schema:
+                kwargs["schema"] = self.schema
+        return kwargs
+
+
 def _add_column_kwargs(
         content_type: str,
         column_names: Optional[List[str]],
