@@ -9,7 +9,7 @@ from deltacat.compute.stats.models.stats_result import StatsResult
 from deltacat.compute.stats.types import StatsType
 from deltacat.compute.stats.utils.io import read_cached_delta_stats, cache_delta_column_stats, get_delta_stats, \
     get_deltas_from_range
-from deltacat.compute.stats.utils.intervals import merge_intervals
+from deltacat.compute.stats.utils.intervals import merge_intervals, DeltaRange
 
 from deltacat.storage import PartitionLocator, DeltaLocator, Delta
 from deltacat.storage import interface as unimplemented_deltacat_storage
@@ -21,10 +21,33 @@ from deltacat.storage import interface as unimplemented_deltacat_storage
 
 def collect(
         source_partition_locator: PartitionLocator,
-        delta_stream_position_range_set: Set[Tuple[int, int]],  # TODO: R&D on RangeSet impl
+        delta_stream_position_range_set: Optional[Set[DeltaRange]] = None,
         columns: Optional[List[str]] = None,
         stat_results_s3_bucket: Optional[str] = None,
         deltacat_storage=unimplemented_deltacat_storage) -> Dict[int, DeltaStats]:
+    """Collects statistics on deltas, given a set of delta stream position ranges.
+
+    Example:
+        >>> collect(locator, set((1, 5), (4, 8), (13, 16)))
+        {
+            1: DeltaStats(),  # DeltaStats for stream positions 1 - 8
+            13: DeltaStats()  # DeltaStats for stream positions 13 - 16
+        }
+
+    Args:
+        source_partition_locator: Reference to the partition locator tied to the given delta stream positions
+        delta_stream_position_range_set: A set of intervals with an int type representing finite,
+            closed bounded values, and a None type representing unbounded infinity.
+        columns: Columns can be optionally included to collect stats on specific columns.
+            By default, all columns will be calculated.
+        stat_results_s3_bucket: Used as a cache file storage for computed delta stats
+        deltacat_storage: Client implementation of the DeltaCAT storage interface
+
+    Returns:
+        A mapping of stream positions to their corresponding delta stats.
+    """
+    if delta_stream_position_range_set is None:
+        delta_stream_position_range_set = {(None, None)}
     delta_stream_range_stats: Dict[int, DeltaStats] = {}
     delta_range_lookup_pending: List[ObjectRef[List[Delta]]] = []
 
