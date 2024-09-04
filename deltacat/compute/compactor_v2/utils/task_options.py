@@ -7,10 +7,10 @@ from deltacat.compute.compactor_v2.model.merge_file_group import (
 from deltacat.types.media import ContentEncoding, ContentType
 from deltacat.types.partial_download import PartialParquetParameters
 from deltacat.storage import (
-    Manifest,
     ManifestEntry,
     interface as unimplemented_deltacat_storage,
 )
+from deltacat.storage.model.manifest import Manifest
 from deltacat.compute.compactor.model.delta_annotated import DeltaAnnotated
 from deltacat.compute.compactor.model.round_completion_info import RoundCompletionInfo
 from deltacat.compute.compactor_v2.utils.primary_key_index import (
