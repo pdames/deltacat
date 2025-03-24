@@ -51,7 +51,7 @@ setuptools.setup(
         "pyarrow == 17.0.0",
         "pydantic == 1.10.4",
         "pymemcache == 4.0.0",
-        "ray >= 2.20.0",
+        "ray >= 2.31.0",
         "s3fs == 2024.5.0",
         "tenacity == 8.2.3",
         "typing-extensions == 4.6.1",

@@ -105,6 +105,15 @@ def is_initialized() -> bool:
     return all_catalogs is not None
 
 
+def ensure_initialized():
+    if not is_initialized():
+        # TODO(pdames): Re-initialize DeltaCAT with all catalogs from the
+        #  last session.
+        raise RuntimeError(
+            "DeltaCAT is not initialized. Please call `dc.init()` and try again."
+        )
+
+
 def init(
     catalogs: Dict[str, Catalog],
     default_catalog_name: Optional[str] = None,
