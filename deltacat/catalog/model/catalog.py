@@ -174,7 +174,6 @@ def put_catalog(name: str, *args, **kwargs) -> Catalog:
             get_catalog(name)
             raise ValueError(f"Catalog {name} already exists.")
         except ValueError:
-            # TODO(pdames): Create dc.put_catalog() helper.
             ray.get(all_catalogs.put.remote(name, new_catalog))
     else:
         init({name: new_catalog})

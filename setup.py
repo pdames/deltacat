@@ -44,14 +44,14 @@ setuptools.setup(
         "getdaft == 0.3.6",
         "intervaltree == 3.1.0",
         "numpy == 1.21.5",
-        "pandas == 1.3.5",
+        "pandas == 2.2.3",
         # upgrade to pyarrow 18.0.0 causes test
         # TestCompactionSession::test_compact_partition_when_incremental_then_rcf_stats_accurate to fail
         # due to input_inflation exceeding 1e-5
         "pyarrow == 17.0.0",
         "pydantic == 1.10.4",
         "pymemcache == 4.0.0",
-        "ray >= 2.31.0",
+        "ray == 2.43.0",
         "s3fs == 2024.5.0",
         "tenacity == 8.2.3",
         "typing-extensions == 4.6.1",
