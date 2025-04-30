@@ -72,11 +72,8 @@ class Catalogs:
                 f"Catalog {default_catalog_name} not found "
                 f"in catalogs to register: {catalogs}"
             )
-        if not catalogs:
-            raise ValueError(
-                f"No catalogs given to register. "
-                f"Please specify one or more catalogs."
-            )
+        if catalogs is None:
+            raise ValueError(f"Catalogs cannot be None.")
         self.catalogs: Dict[str, Catalog] = catalogs
         if default_catalog_name:
             self.default_catalog = self.catalogs[default_catalog_name]
@@ -94,7 +91,7 @@ class Catalogs:
     def put(self, name: str, catalog: Catalog) -> None:
         self.catalogs[name] = catalog
 
-    def get(self, name) -> Catalog:
+    def get(self, name) -> Optional[Catalog]:
         return self.catalogs.get(name)
 
     def default(self) -> Optional[Catalog]:
@@ -115,7 +112,7 @@ def ensure_initialized():
 
 
 def init(
-    catalogs: Dict[str, Catalog],
+    catalogs: Dict[str, Catalog] = {},
     default_catalog_name: Optional[str] = None,
     ray_init_args: Dict[str, Any] = None,
     *args,
@@ -159,9 +156,17 @@ def get_catalog(name: Optional[str] = None) -> Catalog:
     )
     if not catalog:
         available_catalogs = ray.get(all_catalogs.all.remote()).values()
-        raise ValueError(
-            f"Catalog '{name}' not found. Available catalogs: " f"{available_catalogs}."
-        )
+        if name:
+            raise ValueError(
+                f"Catalog '{name}' not found. Available catalogs: "
+                f"{available_catalogs}."
+            )
+        else:
+            raise ValueError(
+                f"Call to get_catalog without name set failed because there "
+                f"is no default Catalog set. Available catalogs: "
+                f"{available_catalogs}."
+            )
     return catalog
 
 

@@ -35,24 +35,32 @@ setuptools.setup(
     packages=setuptools.find_packages(where=".", include="deltacat*"),
     extras_require={
         "iceberg": ["pyiceberg[glue] >= 0.6.0"],
+        # separate s3fs from other AWS dependencies due to vastly increased
+        # installation times when included (due to boto version conflicts)
+        "s3fs": ["s3fs == 2024.5.0"],
         # "iceberg": ["pyiceberg[glue] @ git+https://github.com/apache/iceberg-python"],
     },
     install_requires=[
         # any changes here should also be reflected in requirements.txt
+        # AWS
         "aws-embedded-metrics == 3.2.0",
         "boto3 ~= 1.34",
-        "getdaft == 0.3.6",
+        # GCP
+        "google-cloud-storage",
+        "gcsfs == 2025.3.2",
+        # General
+        "getdaft == 0.4.10",
         "intervaltree == 3.1.0",
-        "numpy == 1.21.5",
+        "numpy == 1.22.4",
         "pandas == 2.2.3",
+        "polars == 1.28.1",
         # upgrade to pyarrow 18.0.0 causes test
         # TestCompactionSession::test_compact_partition_when_incremental_then_rcf_stats_accurate to fail
         # due to input_inflation exceeding 1e-5
         "pyarrow == 17.0.0",
         "pydantic == 1.10.4",
         "pymemcache == 4.0.0",
-        "ray == 2.43.0",
-        "s3fs == 2024.5.0",
+        "ray[default] == 2.43.0",
         "tenacity == 8.2.3",
         "typing-extensions == 4.6.1",
         "redis == 4.6.0",

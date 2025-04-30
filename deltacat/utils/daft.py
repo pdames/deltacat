@@ -2,8 +2,8 @@ import logging
 from typing import Optional, List, Any, Dict, Callable
 import daft
 import ray
-from daft.table import read_parquet_into_pyarrow
 from daft import TimeUnit, DataFrame
+from daft.daft import read_parquet_into_pyarrow
 from daft.io import IOConfig, S3Config
 import pyarrow as pa
 
