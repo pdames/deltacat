@@ -37,7 +37,7 @@ setuptools.setup(
         "iceberg": ["pyiceberg[glue] >= 0.6.0"],
         # separate s3fs from other AWS dependencies due to vastly increased
         # installation times when included (due to boto version conflicts)
-        "s3fs": ["s3fs == 2024.5.0"],
+        "s3fs": ["s3fs == 2025.3.2"],
         # "iceberg": ["pyiceberg[glue] @ git+https://github.com/apache/iceberg-python"],
     },
     install_requires=[

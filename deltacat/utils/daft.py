@@ -3,7 +3,7 @@ from typing import Optional, List, Any, Dict, Callable
 import daft
 import ray
 from daft import TimeUnit, DataFrame
-from daft.daft import read_parquet_into_pyarrow
+from daft.recordbatch import read_parquet_into_pyarrow
 from daft.io import IOConfig, S3Config
 import pyarrow as pa
 
@@ -52,7 +52,7 @@ def s3_files_to_dataframe(
     ), f"daft native reader currently only supports identity encoding, got {content_encoding}"
 
     if not ray.is_initialized():
-        ray.init(address="auto", ignore_reinit_error=True, **ray_init_options)
+        ray.init(ignore_reinit_error=True, **ray_init_options)
 
     daft.context.set_runner_ray(noop_if_initialized=True)
 
@@ -72,9 +72,7 @@ def s3_files_to_dataframe(
         f"Preparing to read S3 object from {len(uris)} files into daft dataframe"
     )
 
-    df, latency = timed_invocation(
-        daft.read_parquet, path=uris, io_config=io_config, use_native_downloader=True
-    )
+    df, latency = timed_invocation(daft.read_parquet, path=uris, io_config=io_config)
 
     logger.debug(f"Time to create daft dataframe from {len(uris)} files is {latency}s")
 
